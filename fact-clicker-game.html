@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фабрика Фактов</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Шапка */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        /* Счётчик знаний */
+        .knowledge-display {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .knowledge-amount {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .knowledge-per-sec {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* Кнопка клика */
+        .click-button {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+
+        .click-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Навигация */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: rgba(255,255,255,0.3);
+            font-weight: bold;
+        }
+
+        /* Секции */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Карточки фактов */
+        .card-item {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-info {
+            flex: 1;
+        }
+
+        .card-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .card-stats {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .card-count {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+
+        .card-buy-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .card-buy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Таблица лидеров */
+        .leaderboard-item {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .leader-rank {
+            font-size: 20px;
+            font-weight: bold;
+            min-width: 30px;
+        }
+
+        .leader-info {
+            flex: 1;
+        }
+
+        .leader-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .leader-score {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        /* Кнопки действий */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Модальное окно факта */
+        .fact-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .fact-modal.active {
+            display: flex;
+        }
+
+        .fact-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .fact-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .fact-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .fact-close-btn {
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Плавающие числа при клике */
+        .float-number {
+            position: fixed;
+            color: #FFD700;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        @keyframes floatUp {
+            to {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Шапка -->
+        <div class="header">
+            <h1>🧠 Фабрика Фактов</h1>
+            <p>Собирай знания и открывай факты!</p>
+        </div>
+
+        <!-- Счётчик знаний -->
+        <div class="knowledge-display">
+            <div class="knowledge-amount" id="knowledgeAmount">0</div>
+            <div class="knowledge-per-sec">
+                💡 <span id="knowledgePerSec">0</span> знаний/сек
+            </div>
+        </div>
+
+        <!-- Кнопка клика -->
+        <div class="click-button" id="clickButton">
+            💡
+        </div>
+
+        <!-- Навигация -->
+        <div class="tabs">
+            <button class="tab active" data-tab="shop">🏪 Магазин</button>
+            <button class="tab" data-tab="leaders">🏆 Лидеры</button>
+            <button class="tab" data-tab="info">ℹ️ Инфо</button>
+        </div>
+
+        <!-- Секция: Магазин карточек -->
+        <div class="section active" id="shop">
+            <div id="shopCards"></div>
+        </div>
+
+        <!-- Секция: Таблица лидеров -->
+        <div class="section" id="leaders">
+            <div id="leaderboard"></div>
+        </div>
+
+        <!-- Секция: Информация -->
+        <div class="section" id="info">
+            <div class="card-item">
+                <div class="card-info">
+                    <div class="card-name">🎁 Пригласи друга</div>
+                    <div class="card-stats">Получи 500 💡 за каждого</div>
+                </div>
+            </div>
+            <div class="card-item">
+                <div class="card-info">
+                    <div class="card-name">📢 Подпишись на канал</div>
+                    <div class="card-stats">Получи 1000 💡 бонусом</div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="action-btn" id="inviteBtn">🎁 Пригласить</button>
+                <button class="action-btn" id="channelBtn">📢 Канал</button>
+            </div>
+        </div>
+
+        <!-- Модальное окно с фактом -->
+        <div class="fact-modal" id="factModal">
+            <div class="fact-content">
+                <div class="fact-icon" id="factIcon">🎉</div>
+                <div class="fact-text" id="factText"></div>
+                <button class="fact-close-btn" id="factCloseBtn">Понятно!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // КОНФИГУРАЦИЯ
+        // ========================================
+        
+        const CONFIG = {
+            CHANNEL_LINK: 'https://t.me/grehfacts',
+            BOT_USERNAME: 'YourBotUsername', // ЗАМЕНИТЕ на username вашего бота
+            REFERRAL_BONUS: 500,
+            CHANNEL_BONUS: 1000
+        };
+
+        // ========================================
+        // ДАННЫЕ КАРТОЧЕК
+        // ========================================
+        
+        const CARDS = [
+            {
+                id: 'basic',
+                name: '📚 Забавный факт',
+                cost: 50,
+                income: 1,
+                icon: '📚',
+                facts: [
+                    'Мёд никогда не портится. Археологи находили горшки с мёдом в египетских гробницах возрастом 3000 лет!',
+                    'Бананы — это ягоды, а клубника — нет. Ботаники классифицируют их по-другому.',
+                    'Осьминоги имеют три сердца и голубую кровь!'
+                ]
+            },
+            {
+                id: 'science',
+                name: '🧠 Научный факт',
+                cost: 300,
+                income: 5,
+                icon: '🧠',
+                facts: [
+                    'Человеческий мозг использует 20% всей энергии тела, хотя весит всего 2% от общей массы.',
+                    'ДНК человека на 50% совпадает с ДНК банана!',
+                    'Свет от Солнца достигает Земли за 8 минут 20 секунд.'
+                ]
+            },
+            {
+                id: 'geography',
+                name: '🌍 География',
+                cost: 1000,
+                income: 20,
+                icon: '🌍',
+                facts: [
+                    'Самая глубокая точка океана — Марианская впадина (11 км). Там можно спрятать Эверест!',
+                    'Россия занимает 11 часовых поясов — больше, чем любая другая страна.',
+                    'В Сахаре иногда выпадает снег!'
+                ]
+            },
+            {
+                id: 'discovery',
+                name: '🔬 Открытие века',
+                cost: 5000,
+                income: 100,
+                icon: '🔬',
+                facts: [
+                    'Антибиотики спасли больше жизней, чем любое другое изобретение в истории.',
+                    'Первый компьютер ENIAC весил 27 тонн и занимал целую комнату!',
+                    'Интернет был создан для военных целей, а стал доступен всем в 1991 году.'
+                ]
+            },
+            {
+                id: 'encyclopedia',
+                name: '🎓 Энциклопедия',
+                cost: 25000,
+                income: 500,
+                icon: '🎓',
+                facts: [
+                    'Во Вселенной больше звёзд, чем песчинок на всех пляжах Земли!',
+                    'Квантовая запутанность позволяет частицам взаимодействовать мгновенно на любом расстоянии.',
+                    'Чёрные дыры искривляют пространство-время настолько сильно, что время там течёт по-другому.'
+                ]
+            }
+        ];
+
+        // ========================================
+        // ИГРОВОЕ СОСТОЯНИЕ
+        // ========================================
+        
+        let gameState = {
+            knowledge: 0,
+            clickPower: 1,
+            cards: {},
+            totalClicks: 0,
+            totalEarned: 0,
+            userId: null,
+            userName: 'Игрок',
+            referrerId: null,
+            hasChannelBonus: false
+        };
+
+        // ========================================
+        // TELEGRAM ИНТЕГРАЦИЯ
+        // ========================================
+        
+        const tg = window.Telegram?.WebApp;
+        const isTelegram = !!tg?.initDataUnsafe?.user;
+
+        if (isTelegram) {
+            tg.expand();
+            tg.ready();
+            
+            const user = tg.initDataUnsafe.user;
+            gameState.userId = user.id.toString();
+            gameState.userName = user.first_name || 'Игрок';
+            
+            // Проверяем реферальный код
+            const startParam = tg.initDataUnsafe.start_param;
+            if (startParam && startParam !== gameState.userId) {
+                gameState.referrerId = startParam;
+                processReferral(startParam);
+            }
+            
+            console.log('✅ Telegram WebApp инициализирован');
+        }
+
+        // ========================================
+        // ХРАНИЛИЩЕ ДАННЫХ
+        // ========================================
+        
+        async function saveGame() {
+            if (!gameState.userId) {
+                localStorage.setItem('factoryGame', JSON.stringify(gameState));
+                return;
+            }
+
+            try {
+                await window.storage.set(
+                    `user:${gameState.userId}`,
+                    JSON.stringify(gameState)
+                );
+                console.log('✅ Игра сохранена');
+            } catch (error) {
+                console.error('❌ Ошибка сохранения:', error);
+                localStorage.setItem('factoryGame', JSON.stringify(gameState));
+            }
+        }
+
+        async function loadGame() {
+            if (!gameState.userId) {
+                const saved = localStorage.getItem('factoryGame');
+                if (saved) {
+                    gameState = { ...gameState, ...JSON.parse(saved) };
+                }
+                return;
+            }
+
+            try {
+                const result = await window.storage.get(`user:${gameState.userId}`);
+                if (result && result.value) {
+                    const saved = JSON.parse(result.value);
+                    gameState = { ...gameState, ...saved };
+                    console.log('✅ Игра загружена');
+                }
+            } catch (error) {
+                console.log('ℹ️ Новый игрок');
+            }
+        }
+
+        async function saveToLeaderboard() {
+            if (!gameState.userId) return;
+
+            try {
+                const income = calculateIncome();
+                await window.storage.set(
+                    `leader:${gameState.userId}`,
+                    JSON.stringify({
+                        name: gameState.userName,
+                        knowledge: Math.floor(gameState.knowledge),
+                        income: income,
+                        timestamp: Date.now()
+                    }),
+                    true // shared = true для таблицы лидеров
+                );
+            } catch (error) {
+                console.error('❌ Ошибка сохранения в лидеры:', error);
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const result = await window.storage.list('leader:', true);
+                if (!result || !result.keys) return [];
+
+                const leaders = [];
+                for (const key of result.keys) {
+                    try {
+                        const data = await window.storage.get(key, true);
+                        if (data && data.value) {
+                            leaders.push(JSON.parse(data.value));
+                        }
+                    } catch (e) {
+                        console.error('Ошибка загрузки лидера:', e);
+                    }
+                }
+
+                return leaders.sort((a, b) => b.knowledge - a.knowledge).slice(0, 10);
+            } catch (error) {
+                console.error('❌ Ошибка загрузки лидеров:', error);
+                return [];
+            }
+        }
+
+        // ========================================
+        // РЕФЕРАЛЬНАЯ СИСТЕМА
+        // ========================================
+        
+        async function processReferral(referrerId) {
+            try {
+                const refKey = `ref:${referrerId}:${gameState.userId}`;
+                
+                // Проверяем, не обработан ли реферал
+                try {
+                    await window.storage.get(refKey);
+                    console.log('ℹ️ Реферал уже обработан');
+                    return;
+                } catch (e) {
+                    // Реферал не найден - обрабатываем
+                }
+
+                // Сохраняем реферал
+                await window.storage.set(refKey, JSON.stringify({
+                    referrer: referrerId,
+                    invited: gameState.userId,
+                    date: new Date().toISOString()
+                }));
+
+                // Начисляем бонус приглашённому
+                gameState.knowledge += CONFIG.REFERRAL_BONUS;
+                await saveGame();
+
+                // Уведомляем
+                if (isTelegram) {
+                    tg.showPopup({
+                        title: '🎉 Бонус за приглашение!',
+                        message: `Вы получили ${CONFIG.REFERRAL_BONUS} 💡 знаний!`,
+                        buttons: [{ type: 'ok' }]
+                    });
+                }
+
+                console.log('✅ Реферал обработан');
+            } catch (error) {
+                console.error('❌ Ошибка обработки реферала:', error);
+            }
+        }
+
+        // ========================================
+        // ИГРОВАЯ ЛОГИКА
+        // ========================================
+        
+        function calculateIncome() {
+            let income = 0;
+            for (const cardId in gameState.cards) {
+                const card = CARDS.find(c => c.id === cardId);
+                if (card) {
+                    income += card.income * gameState.cards[cardId];
+                }
+            }
+            return income;
+        }
+
+        function buyCard(cardId) {
+            const card = CARDS.find(c => c.id === cardId);
+            if (!card) return;
+
+            const currentCount = gameState.cards[cardId] || 0;
+            const cost = Math.floor(card.cost * Math.pow(1.15, currentCount));
+
+            if (gameState.knowledge >= cost) {
+                gameState.knowledge -= cost;
+                gameState.cards[cardId] = currentCount + 1;
+                gameState.totalEarned += card.income;
+                
+                saveGame();
+                saveToLeaderboard();
+                updateUI();
+                
+                // Показываем факт
+                showRandomFact(card);
+            }
+        }
+
+        function showRandomFact(card) {
+            const fact = card.facts[Math.floor(Math.random() * card.facts.length)];
+            const modal = document.getElementById('factModal');
+            const icon = document.getElementById('factIcon');
+            const text = document.getElementById('factText');
+            
+            icon.textContent = card.icon;
+            text.textContent = fact;
+            modal.classList.add('active');
+        }
+
+        function handleClick(event) {
+            gameState.knowledge += gameState.clickPower;
+            gameState.totalClicks++;
+            
+            // Плавающее число
+            const floatNum = document.createElement('div');
+            floatNum.className = 'float-number';
+            floatNum.textContent = `+${gameState.clickPower}`;
+            floatNum.style.left = event.clientX + 'px';
+            floatNum.style.top = event.clientY + 'px';
+            document.body.appendChild(floatNum);
+            
+            setTimeout(() => floatNum.remove(), 1000);
+            
+            updateUI();
+        }
+
+        // ========================================
+        // ИНТЕРФЕЙС
+        // ========================================
+        
+        function updateUI() {
+            document.getElementById('knowledgeAmount').textContent = Math.floor(gameState.knowledge);
+            document.getElementById('knowledgePerSec').textContent = calculateIncome();
+            
+            renderShop();
+            saveGame();
+        }
+
+        function renderShop() {
+            const container = document.getElementById('shopCards');
+            container.innerHTML = '';
+            
+            CARDS.forEach(card => {
+                const count = gameState.cards[card.id] || 0;
+                const cost = Math.floor(card.cost * Math.pow(1.15, count));
+                const canBuy = gameState.knowledge >= cost;
+                
+                const div = document.createElement('div');
+                div.className = 'card-item';
+                div.innerHTML = `
+                    <div class="card-info">
+                        <div class="card-name">${card.name}</div>
+                        <div class="card-stats">+${card.income} 💡/сек • Цена: ${cost} 💡</div>
+                        <div class="card-count">Куплено: ${count}</div>
+                    </div>
+                    <button class="card-buy-btn" ${!canBuy ? 'disabled' : ''}>
+                        Купить
+                    </button>
+                `;
+                
+                div.querySelector('button').onclick = () => buyCard(card.id);
+                container.appendChild(div);
+            });
+        }
+
+        async function renderLeaderboard() {
+            const container = document.getElementById('leaderboard');
+            container.innerHTML = '<div style="text-align:center;padding:20px;">⏳ Загрузка...</div>';
+            
+            const leaders = await loadLeaderboard();
+            
+            if (leaders.length === 0) {
+                container.innerHTML = '<div class="empty-state">🏆 Пока нет лидеров.<br>Стань первым!</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            leaders.forEach((leader, index) => {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-item';
+                div.innerHTML = `
+                    <div class="leader-rank">${['🥇','🥈','🥉'][index] || `#${index + 1}`}</div>
+                    <div class="leader-info">
+                        <div class="leader-name">${leader.name}</div>
+                        <div class="leader-score">${leader.knowledge} 💡 • ${leader.income}/сек</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // ========================================
+        // СОБЫТИЯ
+        // ========================================
+        
+        document.getElementById('clickButton').addEventListener('click', handleClick);
+        
+        document.getElementById('factCloseBtn').addEventListener('click', () => {
+            document.getElementById('factModal').classList.remove('active');
+        });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.tab;
+                
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(target).classList.add('active');
+                
+                if (target === 'leaders') {
+                    renderLeaderboard();
+                }
+            });
+        });
+
+        document.getElementById('inviteBtn').addEventListener('click', () => {
+            if (!isTelegram || !gameState.userId) {
+                alert('⚠️ Доступно только в Telegram');
+                return;
+            }
+            
+            const inviteLink = `https://t.me/${CONFIG.BOT_USERNAME}?start=${gameState.userId}`;
+            const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent('🧠 Присоединяйся к Фабрике Фактов! Собирай знания и открывай интересные факты!')}`;
+            
+            tg.openTelegramLink(shareUrl);
+        });
+
+        document.getElementById('channelBtn').addEventListener('click', () => {
+            if (isTelegram) {
+                tg.openTelegramLink(CONFIG.CHANNEL_LINK);
+            } else {
+                window.open(CONFIG.CHANNEL_LINK, '_blank');
+            }
+        });
+
+        // ========================================
+        // ПАССИВНЫЙ ДОХОД
+        // ========================================
+        
+        setInterval(() => {
+            const income = calculateIncome();
+            if (income > 0) {
+                gameState.knowledge += income;
+                updateUI();
+            }
+        }, 1000);
+
+        // Сохранение каждые 10 секунд
+        setInterval(() => {
+            saveGame();
+            saveToLeaderboard();
+        }, 10000);
+
+        // ========================================
+        // ЗАПУСК ИГРЫ
+        // ========================================
+        
+        (async function init() {
+            await loadGame();
+            updateUI();
+            
+            console.log('🧠 Фабрика Фактов запущена!');
+            console.log('💡 Знаний:', gameState.knowledge);
+            console.log('📊 Доход/сек:', calculateIncome());
+        })();
+    </script>
+</body>
+</html>
